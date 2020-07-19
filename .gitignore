@@ -1,4 +1,5 @@
 *.swp
 images/
-
+venv/
+__pycache__/
 .idea/
