@@ -2,5 +2,5 @@
 images/
 __pycache__/
 *.pyc
-
+venv/
 .idea/

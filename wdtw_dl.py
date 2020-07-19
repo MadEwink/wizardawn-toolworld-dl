@@ -2,31 +2,44 @@ from PIL import Image
 from html.parser import HTMLParser
 import os
 import urllib.request
+from downloader import PageDownloader
 
 def main(args):
+    """
     if (args.input != ""):
         html_filename = args.input
     print("Parse"+html_filename)
-    wmhp =  WizardawnMapHTMLParser()
+    wmhp = WizardawnMapHTMLParser()
     with open(html_filename,'r') as f:
         while True:
             html_code = f.read()
             if (html_code == ''):
                 break
             wmhp.feed(html_code)
+    """
+    wmhp = WizardawnMapHTMLParser()
+    wmhp.feed(PageDownloader().get_html())
+
     print("Download missing images in folder", args.directory)
     download_all_images(wmhp.image_data_list, args)
+
     print("Produce result")
     assemble_all_images(wmhp.image_data_list, args)
     print("Done")
 
+
 class WizardawnMapHTMLParser(HTMLParser):
+
     def __init__(self):
         super().__init__()
         self.is_in_body = False
         self.depth = 0                                   # 0 in body, increasing, only considers div with "z-index"
         self.node_coordinates = [(0,0)]                  # coordinates of depth relative to root, depth 0 is (0,0)
         self.image_data_list = []                                 # contains tuples like (path, realx, realy)
+
+    def error(self, message):
+        raise NotImplementedError
+
     def handle_starttag(self,tag,attrs):
         if (tag == "body"):
             self.is_in_body = True
@@ -54,6 +67,7 @@ class WizardawnMapHTMLParser(HTMLParser):
                 realx = sum([self.node_coordinates[i][0] for i in range(self.depth+1)])
                 realy = sum([self.node_coordinates[i][1] for i in range(self.depth+1)])
                 self.image_data_list.append((path, realx,realy))
+
     def handle_endtag(self, tag):
         if (tag == "body"):
             self.is_in_body = False
