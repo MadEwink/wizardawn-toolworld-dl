@@ -1,4 +1,6 @@
 *.swp
 images/
+__pycache__/
+*.pyc
 
 .idea/

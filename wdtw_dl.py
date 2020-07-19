@@ -3,11 +3,9 @@ from html.parser import HTMLParser
 import os
 import urllib.request
 
-image_root_path = "./images/"
-site_url = "https://osricrpg.com/wizardawn/"
-
-def main():
-    html_filename = "body.html"
+def main(args):
+    if (args.input != ""):
+        html_filename = args.input
     print("Parse"+html_filename)
     wmhp =  WizardawnMapHTMLParser()
     with open(html_filename,'r') as f:
@@ -16,10 +14,10 @@ def main():
             if (html_code == ''):
                 break
             wmhp.feed(html_code)
-    print("Download missing images in folder", image_root_path)
-    download_all_images(wmhp.image_data_list)
+    print("Download missing images in folder", args.directory)
+    download_all_images(wmhp.image_data_list, args)
     print("Produce result")
-    assemble_all_images(wmhp.image_data_list)
+    assemble_all_images(wmhp.image_data_list, args)
     print("Done")
 
 class WizardawnMapHTMLParser(HTMLParser):
@@ -67,25 +65,25 @@ class WizardawnMapHTMLParser(HTMLParser):
                 self.depth -= 1
                 self.node_coordinates.pop()
 
-def download_all_images(image_data_list):
-    if not os.path.isdir(image_root_path):
-        os.mkdir(image_root_path)
+def download_all_images(image_data_list, args):
+    if not os.path.isdir(args.directory):
+        os.mkdir(args.directory)
     for image_data in image_data_list:
         path = image_data[0]
-        if os.path.isfile(image_root_path+path):
+        if os.path.isfile(args.directory+path):
             continue
         # check if folder exist
         index = path.rfind('/')
-        os.makedirs(image_root_path+path[:index], exist_ok=True)
-        urllib.request.urlretrieve(site_url+path, image_root_path+path)
+        os.makedirs(args.directory+path[:index], exist_ok=True)
+        urllib.request.urlretrieve(args.site+path, args.directory+path)
 
-def assemble_all_images(image_data_list):
+def assemble_all_images(image_data_list, args):
     images = dict()
     size = [0,0]
     # Size of result
     for image_data in image_data_list:
         if not image_data[0] in images:
-            new_image = Image.open(image_root_path+image_data[0])
+            new_image = Image.open(args.directory+image_data[0])
             images[image_data[0]] = new_image
         if (size[0] < image_data[1] + new_image.size[0]):
             size[0] = image_data[1] + new_image.size[0]
@@ -95,7 +93,4 @@ def assemble_all_images(image_data_list):
     print(size)
     for image_data in image_data_list:
         result.alpha_composite(images[image_data[0]], (image_data[1],image_data[2]))
-    result.save(image_root_path+"merged.png", 'PNG')
-
-if __name__=="__main__":
-    main()
+    result.save(args.directory+args.output, 'PNG')
